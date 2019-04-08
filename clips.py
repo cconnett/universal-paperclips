@@ -170,9 +170,10 @@ def Heuristic(state):
 
 
 while queue:
-  head = heapq.heappop(queue)
+  (_, head) = heapq.heappop(queue)
   if Goal(head):
     print(head.history)
+    break
 
   for successor in Succ(head):
-    heapq.heappush(queue, successor)
+    heapq.heappush(queue, (Heuristic(successor), successor))
