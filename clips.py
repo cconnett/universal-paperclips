@@ -15,7 +15,7 @@ state_attrs = [
     'price',
     'marketing',
     'wire',
-    'wirebuys',
+    'wire_base_price',
     'research',
     'autoclippers',
     'megaclippers',
@@ -56,6 +56,8 @@ def Succ(state):
     autoclipper_boost += 0.5
   if 'optimized_autoclippers' in state.research:
     autoclipper_boost += 0.75
+  if 'hadwiger_diagrams' in state.research:
+    autoclipper_boost += 5
   megaclipper_boost = 1
   if 'improved_autoclippers' in state.research:
     megaclipper_boost += 0.25
@@ -104,14 +106,14 @@ def Succ(state):
 
   # Options:
   # Make clips for 1 second
-  yield state._replace(
-      t=state.t + 1,
-      clips=state.clips + rate,
-      history=state.history + ['Make clips.'])
+  if state.wire >= rate:
+    yield state._replace(
+        t=state.t + 1,
+        clips=state.clips + rate,
+        wire=state.wire - rate,
+        history=state.history + ['Make clips.'])
   # QCompute - this is on a global timer from the point the first chip is
   # acquired
-
-  # Other options take 1 second to perform
 
   # Set price - takes 2 seconds - not allowed to change it again until some
   # research or marketing or 30 seconds pass.
@@ -145,9 +147,19 @@ def Succ(state):
   # Buy wire - assume advances exactly 1.5% of the time. It's on a 100ms cycle,
   # so it advances every 6.6s.
   if 'wire_buyer' not in state.research:
+    wire_yield = 1000
+    # TODO: calculate wire yield based on research
     wire_counter = state.t / (20 / 3)
     wire_price_adjustment = 6 * math.sin(wire_counter)
-    wire_price = math.ceil(wire_base_price + wire_price_adjustment)
+    wire_price = math.ceil(state.wire_base_price + wire_price_adjustment)
+
+    funds = state.funds
+    wire = state.wire
+    while funds >= wire_price:
+      funds -= wire_price
+      wire += wire_yield
+    if wire > state.wire:
+      yield state.replace_(t=t + 1, funds=state.funds, wire=state.wire)
 
   # Allocate trust.
   spare_trust = state.trust - (state.processors + state.memory)
