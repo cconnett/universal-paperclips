@@ -116,16 +116,20 @@ def Succ(state):
 
   # Set price - takes 2 seconds - not allowed to change it again until some
   # research or marketing or 30 seconds pass.
-  last_price_change = state.history.rfind(
-      'Set price.')  # Fixme: actual entry must contain the price set to.
+
+  last_price_change = len(state.history) - 1
+  while (last_price_change >= 0 and
+         not state.history[last_price_change].startswith('Set price')):
+    last_price_change -= 1
   actions_since = state.history[last_price_change:]
   if ('research' in actions_since or 'marketing' in actions_since or
-      last_price_change.t + 30 < state.t):
+      state.history[last_price_change].t + 30 < state.t):
     for delta in range(-20, 21):
-      yield state._replace(
-          t=state.t + 2,
-          price=state.price + delta,
-          history=state.history + ['Set price.'])
+      if state.price + delta >= 1:
+        yield state._replace(
+            t=state.t + 2,
+            price=state.price + delta,
+            history=state.history + [f'Set price to {state.price + delta}.'])
   # Buy clippers - takes 1 second
   funds = state.funds
   autoclippers = state.autoclippers
