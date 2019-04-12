@@ -75,8 +75,7 @@ def Succ(state):
 
   if state.ops >= state.memory * 1000:
     # This crazy expression is what's in the game code, but it's basically
-    # linear over the region that we care about. It's approximately 37.1282 +
-    # 3.26543 (p - 15).
+    # linear over the region that we care about.
     creativity_speed = (
         math.log10(state.processors) * state.processors**1.1 + state.processors
         - 1)
